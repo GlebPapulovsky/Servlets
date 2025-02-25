@@ -25,8 +25,9 @@ public class PostService {
     return repository.save(post);
   }
 
-  public void removeById(long id) {
-    repository.removeById(id);
+  public boolean removeById(long id) {
+
+    return repository.removeById(id);
   }
 }
 

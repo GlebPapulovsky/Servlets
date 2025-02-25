@@ -9,6 +9,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class MainServlet extends HttpServlet {
+
+  final String POSTS_PATH = "/api/posts";
+  final String POST_WITH_ID_PATH = "/api/posts/\\d+";
   private PostController controller;
 
   @Override
@@ -20,31 +23,35 @@ public class MainServlet extends HttpServlet {
 
   @Override
   protected void service(HttpServletRequest req, HttpServletResponse resp) {
-    // если деплоились в root context, то достаточно этого
+
     try {
       final var path = req.getRequestURI();
       final var method = req.getMethod();
-      // primitive routing
-      if (method.equals("GET") && path.equals("/api/posts")) {
-        controller.all(resp);
-        return;
+
+      if (path.matches(POST_WITH_ID_PATH)) {
+        final var id = Long.parseLong(path.substring(path.lastIndexOf("/") + 1));
+        System.out.println(id);
+        if (method.equals("GET")) {
+          controller.getById(id, resp);
+          return;
+        }
+        if (method.equals("DELETE")) {
+          controller.removeById(id, resp);
+          return;
+        }
       }
-      if (method.equals("GET") && path.matches("/api/posts/\\d+")) {
-        // easy way
-        final var id = Long.parseLong(path.substring(path.lastIndexOf("/")));
-        controller.getById(id, resp);
-        return;
+      if (path.equals(POSTS_PATH)) {
+        if (method.equals("GET")) {
+          controller.all(resp);
+          return;
+        }
+        if (method.equals("POST")) {
+          controller.save(req.getReader(), resp);
+          return;
+        }
       }
-      if (method.equals("POST") && path.equals("/api/posts")) {
-        controller.save(req.getReader(), resp);
-        return;
-      }
-      if (method.equals("DELETE") && path.matches("/api/posts/\\d+")) {
-        // easy way
-        final var id = Long.parseLong(path.substring(path.lastIndexOf("/")));
-        controller.removeById(id, resp);
-        return;
-      }
+
+
       resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
     } catch (Exception e) {
       e.printStackTrace();
